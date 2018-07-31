@@ -23,15 +23,12 @@ int main(void)
 	while (1) 
     {
 		unsigned char count = 0;
-	
-		//read first character of both ports A and B
-		tmpA = PINA & 0x01;
-		tmpB = PINB & 0x01;
 
-		for (unsigned char i = 0; i < 8; i++){	
-			tmpA = (tmpA & (PINA << i)) != 0;
-			if (tmpA) count++;
-			
+		for (unsigned short i = 0; i < 8; i++){	
+			tmpA = GetBit(PINA, i);
+			if (tmpA == 0x01){
+				 count++;
+			}
 		}
 		
 		//output
