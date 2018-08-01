@@ -1,10 +1,8 @@
 /*
- * Victor Ho
- * Luis Enriquez-Contreras
- * Lab Section: 21
- * Assignment: Lab 2 Exercise 1
+ * vho008_lab2_part1.c
  *
- * I acknowledge all content contained herein, excluding template or example code, is my own original work.
+ * Created: 7/31/2018 12:43:29 PM
+ * Author : ucrcse
  */ 
 
 #include <avr/io.h>
@@ -28,12 +26,8 @@ int main(void)
 
 		for (unsigned short i = 0; i < 8; i++){	
 			tmpA = GetBit(PINA, i);
-			tmpB = GetBit(PINB, i);
 			if (tmpA == 0x01){
 				 count++;
-			}
-			if (tmpB == 0x01){
-				count++;
 			}
 		}
 		
