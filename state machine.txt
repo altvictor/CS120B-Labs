@@ -1,0 +1,43 @@
+/*
+ * Victor Ho
+ * Luis Enriquez-Contreras
+ * Lab Section: 21
+ * Assignment: Lab 3 Exercise 2
+ * 
+ * I acknowledge all content contained herein, excluding template or example code, is my own original work.
+ */ 
+
+#include <avr/io.h>
+
+enum States {start} state;
+	
+void tick(){
+	switch (state){ //transitions
+		case start:
+			break;
+		default:
+			break;
+	}
+		
+	switch (state){ //actions
+		case start:
+			break;
+		default:
+			break;
+	}
+}
+int main(void)
+{
+	DDRA = 0x00; PORTA = 0xFF;
+	DDRC = 0xFF; PORTC = 0x00;
+	
+	//initialize
+	state = start;
+	
+	
+    while (1) 
+    {
+		tick();
+	}
+}
+
