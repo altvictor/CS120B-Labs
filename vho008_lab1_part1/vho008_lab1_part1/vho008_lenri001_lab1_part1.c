@@ -1,8 +1,10 @@
 /*
- * vho008_lab1_part1.c
- *
- * Created: 7/30/2018 2:08:13 PM
- * Author : ucrcse
+ * Victor Ho
+ * Luis Enriquez-Contreras
+ * Lab Section: 21
+ * Assignment: Lab 1 Exercise 1
+ * 
+ * I acknowledge all content contained herein, excluding template or example code, is my own original work.
  */ 
 
 #include <avr/io.h>
