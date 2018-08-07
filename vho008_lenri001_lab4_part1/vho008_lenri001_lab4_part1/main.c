@@ -24,6 +24,7 @@ int main(void)
     while (1) 
     {
 		fuel = PINA & 0x0F;
+		fuel = ~fuel;
 		
 		if (fuel > 12){
 			tmpC = 0x3F;
