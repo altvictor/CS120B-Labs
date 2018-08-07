@@ -94,6 +94,7 @@ int main()
 	TimerOn();
 	
 	//initialize
+	state = start;
 	
     while (1) 
     {		

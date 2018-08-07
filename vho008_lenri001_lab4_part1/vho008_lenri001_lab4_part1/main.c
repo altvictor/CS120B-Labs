@@ -16,15 +16,14 @@ unsigned char GetBit(unsigned char x, unsigned char k){
 int main(void)
 {
 	DDRA = 0x00; PORTA = 0xFF;
-	DDRC = 0xFF; PORTC = 0x00;
+	DDRB = 0xFF; PORTB = 0x00;
 	
 	unsigned char fuel = 0;
 	unsigned tmpC = 0x00;
 	
     while (1) 
     {
-		fuel = PINA & 0x0F;
-		//fuel = ~fuel;
+		fuel = (~PINA)& 0x0F;
 		
 		if (fuel > 12){
 			tmpC = 0x3F;
@@ -54,7 +53,7 @@ int main(void)
 		}
 		
 		//output
-		PORTC = tmpC;
+		PORTB = tmpC;
     }
 }
 
