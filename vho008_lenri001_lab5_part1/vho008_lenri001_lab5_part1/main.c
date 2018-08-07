@@ -1,8 +1,10 @@
 /*
- * vho008_lenri001_lab5_part1.c
+ * Victor Ho
+ * Luis Enriquez-Contreras
+ * Lab Section: 21
+ * Assignment: Lab 5 Exercise 1
  *
- * Created: 8/6/2018 1:28:28 PM
- * Author : ucrcse
+ * I acknowledge all content contained herein, excluding template or example code, is my own original work.
  */ 
 
 #include <avr/io.h>
@@ -12,6 +14,8 @@ volatile unsigned char TimerFlag = 0;
 
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
+
+enum States {start, blink0, blink1, blink2} state;
 
 void TimerOn(){
 	TCCR1B = 0x0B;
@@ -43,18 +47,57 @@ void TimerSet(unsigned long M){
 	_avr_timer_cntcurr = _avr_timer_M;
 }
 
+void tick(){
+	unsigned char tmpB = 0x00;
 
+	switch (state){ //transitions
+		case start:
+			state = blink0;
+			break;
+		case blink0:
+			state = blink1;
+			break;
+		case blink1:
+			state = blink2;
+			break;
+		case blink2:
+			state = blink0;
+			break;
+		default:
+			state = blink0;
+			break;
+	}
+	
+	switch (state){ //actions		
+		case start:
+			tmpB = 0x00;
+			break;
+		case blink0:
+			tmpB = 0x01;
+			break;
+		case blink1:
+			tmpB = 0x02;
+			break;
+		case blink2:
+			tmpB = 0x04;
+			break;
+		default:
+			break;
+	}
+	PORTB = tmpB;
+}
 int main()
 {
 	DDRB = 0xFF; PORTB = 0x00;
+	
 	TimerSet(1000);
 	TimerOn();
-	unsigned char tmpB = 0x00;
+	
+	//initialize
 	
     while (1) 
-    {		//temporary test code
-		tmpB = ~tmpB;
-		PORTB = tmpB;
+    {		
+		tick();
 		while(!TimerFlag);
 		TimerFlag = 0;
     }
