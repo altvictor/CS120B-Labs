@@ -51,6 +51,8 @@ void TimerSet(unsigned long M){
 }
 
 void tick(){
+	unsigned char tmpA = ~PINA;
+
 	switch (state){ //transitions
 		case start:
 			state = pressNone;
@@ -59,13 +61,14 @@ void tick(){
 		case pressA0:
 		case pressA1:
 		case pressBoth:
-			if (PINA == 0x01) state = pressA0;
-			else if (PINA == 0x02) state = pressA1;
-			else if (PINA == 0x03) state = pressBoth;
+			if (tmpA == 0x01) state = pressA0;
+			else if (tmpA == 0x02) state = pressA1;
+			else if (tmpA == 0x03) state = pressBoth;
 			else state = pressNone;
 			break;
 		default:
 			state = pressNone;
+			break;
 	}
 	
 	switch (state){ //actions
@@ -90,6 +93,7 @@ void tick(){
 			break;
 	}
 	
+	LCD_Cursor(1);
 	LCD_WriteData(count + '0');
 }
 int main()
@@ -103,7 +107,6 @@ int main()
 	//initialize
 	LCD_init();
 	state = start;
-	unsigned char tmpB = 0x00;
 	
     while (1) 
     {		
