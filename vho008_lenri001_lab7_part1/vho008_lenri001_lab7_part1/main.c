@@ -1,0 +1,154 @@
+/*
+ * Victor Ho
+ * Luis Enriquez-Contreras
+ * Lab Section: 21
+ * Assignment: Lab 7 Exercise 1
+ *
+ * I acknowledge all content contained herein, excluding template or example code, is my own original work.
+ */ 
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+unsigned long _avr_timer_M = 1;
+unsigned long _avr_timer_cntcurr = 0;
+
+unsigned char tasksPeriod = 500;
+
+enum TickFct_ThreeLED {start, light0, light1, light2};
+int TickFct_ThreeLED(int state);
+
+enum TickFct_BlinkLED {start, light3On, light3Off};
+int TickFct_BlinkLED(int state);
+
+enum TickFct_CombineLED {start};
+int TickFct_CombineLED(int state);
+
+typedef struct Task;
+
+const unsigned char tasksSize = 3;
+Task tasks[tasksSize];
+
+void TimerOn();
+void TimerOff();
+void TimerISR();
+ISR(TIMER1_COMPA_vect);
+void TimerSet(unsigned long M);
+
+int main()
+{
+	//initialize
+	unsigned char i = 0;
+	tasks[i].state = start;
+	tasks[i].period = 1000;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &TickFct_ThreeLED;
+	i++;
+	tasks[i].state = start;
+	tasks[i].period = 1000;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &TickFct_BlinkLED;
+	i++;
+	tasks[i].state = start;
+	tasks[i].period = 1000;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &TickFct_CombineLED;
+	
+	DDRB = 0xFF; PORTB = 0x00;
+	TimerSet(1000);
+	TimerOn();
+		
+    while (1) {}
+}
+
+int TickFct_ThreeLED(int state){
+	switch (state){ //transitions
+		case start:
+		break;
+		default:
+		break;
+	}
+	
+	switch (state){ //actions
+		case start:
+		break;
+		default:
+		break;
+	}
+}
+
+int TickFct_BlinkLED(int state){
+	switch (state){ //transitions
+		case start:
+		break;
+		default:
+		break;
+	}
+	
+	switch (state){ //actions
+		case start:
+		break;
+		default:
+		break;
+	}
+}
+int TickFct_CombineLED(int state){
+	switch (state){ //transitions
+		case start:
+		break;
+		default:
+		break;
+	}
+	
+	switch (state){ //actions
+		case start:
+		break;
+		default:
+		break;
+	}
+}
+
+
+typedef struct Task{
+	int state;
+	unsigned long period;
+	unsigned long elapsedTime;
+	int (*TickFct)(int);
+} task;
+
+void TimerOn(){
+	TCCR1B = 0x0B;
+	OCR1A = 125;
+	TIMSK1 = 0x02;
+	TCNT1 = 0;
+	_avr_timer_cntcurr = _avr_timer_M;
+	SREG |= 0x80;
+}
+
+void TimerOff(){
+	TCCR1B = 0x00;
+}
+
+void TimerISR(){
+	unsigned char i;
+	for (i = 0; i < tasksSize; ++i){
+		if (tasks[i].elapsedTime >= tasks[i].period){
+			tasks[i].state = tasks[i].TickFct(tasks[i].state);
+			tasks[i].elapsedTime = 0;
+		}
+		tasks[i].elapsedTime += tasks[i].period;
+	}
+}
+
+ISR(TIMER1_COMPA_vect){
+	_avr_timer_cntcurr--;
+	if (_avr_timer_cntcurr == 0){
+		TimerISR();
+		_avr_timer_cntcurr = _avr_timer_M;
+	}
+}
+
+void TimerSet(unsigned long M){
+	_avr_timer_M = M;
+	_avr_timer_cntcurr = _avr_timer_M;
+}
