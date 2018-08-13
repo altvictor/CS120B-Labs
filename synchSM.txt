@@ -9,15 +9,99 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "io.c"
-
-volatile unsigned char TimerFlag = 0;
 
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
 
 unsigned char tasksPeriod = 500;
-enum States {start} state;
+
+enum TickFct_ThreeLED {start};
+int TickFct_ThreeLED(int state);
+
+enum TickFct_BlinkLED {start};
+int TickFct_BlinkLED(int state);
+
+enum TickFct_CombineLED {start};
+int TickFct_CombineLED(int state);
+
+typedef struct Task;
+
+const unsigned char tasksSize = 2;
+Task tasks[tasksSize];
+
+void TimerOn();
+void TimerOff();
+void TimerISR();
+ISR(TIMER1_COMPA_vect);
+void TimerSet(unsigned long M);
+
+int main()
+{
+	//create tasks
+	unsigned char i = 0;
+	tasks[i].state = start;
+	tasks[i].period = 1000;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &TickFct_ThreeLED;
+	i++;
+	
+	DDRB = 0xFF; PORTB = 0x00;
+	TimerSet(1000);
+	TimerOn();
+	
+	//initialize
+	unsigned char tmpB = 0x00;
+	
+    while (1) {}
+}
+
+int TickFct_ThreeLED(int state){
+	switch (state){ //transitions
+		case start:
+		break;
+		default:
+		break;
+	}
+	
+	switch (state){ //actions
+		case start:
+		break;
+		default:
+		break;
+	}
+}
+
+int TickFct_BlinkLED(int state){
+	switch (state){ //transitions
+		case start:
+		break;
+		default:
+		break;
+	}
+	
+	switch (state){ //actions
+		case start:
+		break;
+		default:
+		break;
+	}
+}
+int TickFct_CombineLED(int state){
+	switch (state){ //transitions
+		case start:
+		break;
+		default:
+		break;
+	}
+	
+	switch (state){ //actions
+		case start:
+		break;
+		default:
+		break;
+	}
+}
+
 
 typedef struct Task{
 	int state;
@@ -25,9 +109,6 @@ typedef struct Task{
 	unsigned long elapsedTime;
 	int (*TickFct)(int);
 } task;
-
-const unsigned char tasksSize = 2;
-Task tasks[tasksSize];
 
 void TimerOn(){
 	TCCR1B = 0x0B;
@@ -65,37 +146,3 @@ void TimerSet(unsigned long M){
 	_avr_timer_M = M;
 	_avr_timer_cntcurr = _avr_timer_M;
 }
-
-void tick(){
-	switch (state){ //transitions
-		case start:
-		break;
-		default:
-		break;
-	}
-	
-	switch (state){ //actions
-		case start:
-		break;
-		default:
-		break;
-	}
-}
-
-int main()
-{
-	//create tasks
-	unsigned char i = 0;
-	tasks[i].state = 
-	
-	DDRB = 0xFF; PORTB = 0x00;
-	TimerSet(1000);
-	TimerOn();
-	
-	//initialize
-	LCD_init();
-	unsigned char tmpB = 0x00;
-	
-    while (1) {}
-}
-
