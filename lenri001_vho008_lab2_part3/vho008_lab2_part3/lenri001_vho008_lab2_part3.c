@@ -2,7 +2,7 @@
  * Victor Ho
  * Luis Enriquez-Contreras
  * Lab Section: 21
- * Assignment: Lab 4 Exercise 1
+ * Assignment: Lab 2 Exercise 3
  *
  * I acknowledge all content contained herein, excluding template or example code, is my own original work.
  */ 
@@ -19,12 +19,13 @@ int main(void)
 	DDRC = 0xFF; PORTC = 0x00;
 	
 	unsigned char fuel = 0;
+	unsigned char icon = 0;
 	unsigned tmpC = 0x00;
 	
     while (1) 
     {
 		fuel = PINA & 0x0F;
-		//fuel = ~fuel;
+		icon = PINA & 0x70;
 		
 		if (fuel > 12){
 			tmpC = 0x3F;
@@ -51,6 +52,11 @@ int main(void)
 		//low fuel
 		if (fuel < 5){
 			tmpC = tmpC + 0x40;
+		}
+		
+		//fasten seatbelt
+		if (icon == 0x30){
+			tmpC = tmpC + 0x80;
 		}
 		
 		//output

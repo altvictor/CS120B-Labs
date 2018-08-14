@@ -2,7 +2,7 @@
  * Victor Ho
  * Luis Enriquez-Contreras
  * Lab Section: 21
- * Assignment: Lab 4 Exercise 1
+ * Assignment: Lab 2 Exercise 2
  *
  * I acknowledge all content contained herein, excluding template or example code, is my own original work.
  */ 
@@ -24,7 +24,6 @@ int main(void)
     while (1) 
     {
 		fuel = PINA & 0x0F;
-		//fuel = ~fuel;
 		
 		if (fuel > 12){
 			tmpC = 0x3F;
