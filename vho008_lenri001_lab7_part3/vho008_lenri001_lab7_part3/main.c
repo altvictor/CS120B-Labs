@@ -42,11 +42,13 @@ int Speaker_tick(int state);
 enum CombineLED_States;
 int CombineLED_tick(int state);
 
+#define button2 ((~PINA) & 0x04)
 
 void initializeTasks();
 
 int main()
 {
+	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 
 	//initialize
@@ -210,31 +212,37 @@ int BlinkLED_tick(int state){
 }
 
 enum Speaker_States {spkr_Start, spkr_On, spkr_Off};
+	
 int Speaker_tick(int state){
 	switch (state){
 		case spkr_Start:
-		bt_state = spkr_On;
+		state = spkr_Off;
 		break;
 		case spkr_On:
-		bt_state = spkr_Off;
+		state = spkr_Off;
 		break;
 		case spkr_Off:
-		bt_state = spkr_On;
+		if(button2 == 0x04){
+			state = spkr_On;	
+		}
 		break;
 		default:
+		state = spkr_Start;
 		break;
 	}
 	switch(state){
 		case spkr_Start:
+		outputSpeaker = 0x00;
 		break;
 		case spkr_On:
-		btVal = 0x10;
+		outputSpeaker = 0x01;
 		break;
 		case spkr_Off:
-		btVal = 0x00;
+		outputSpeaker = 0x00;
 		break;
 	}
-	
+	return state;
+}
 
 enum CombineLED_States {Combine_start, display};
 	
@@ -261,6 +269,7 @@ int CombineLED_tick(int state){
 		case display:
 		tmpB = outputThree;
 		tmpB += (outputBlink << 3);
+		tmpB += (outputSpeaker << 4);
 		PORTB = tmpB;
 		break;
 		default:
