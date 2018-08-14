@@ -27,7 +27,7 @@ unsigned long gcd(unsigned long a, unsigned long b);
 
 #define tasksSize 3
 task tasks[tasksSize];
-unsigned long tasksPeriod = 1000;
+unsigned long tasksPeriod = 1;
 
 unsigned char outputThree = 0x00;
 unsigned char outputBlink = 0x00;
@@ -59,24 +59,24 @@ void initializeTasks(){
 	unsigned char index = 0;
 
 	tasks[index].state = -1;
-	tasks[index].period = tasksPeriod;
+	tasks[index].period = 1000;
 	tasks[index].elapsedTime = 0;
 	tasks[index].TickFct = &ThreeLED_tick;
-	tasksPeriod = tasks[index].period;
+//	tasksPeriod = tasks[index].period;
 	index++;
 	
 	tasks[index].state = -1;
-	tasks[index].period = tasksPeriod;
+	tasks[index].period = 1000;
 	tasks[index].elapsedTime = 0;
 	tasks[index].TickFct = &BlinkLED_tick;
-	tasksPeriod = gcd(tasksPeriod, tasks[index].period);
+//	tasksPeriod = gcd(tasksPeriod, tasks[index].period);
 	index++;
 	
 	tasks[index].state = -1;
-	tasks[index].period = tasksPeriod;
+	tasks[index].period = 1000;
 	tasks[index].elapsedTime = 0;
 	tasks[index].TickFct = &CombineLED_tick;
-	tasksPeriod = gcd(tasksPeriod, tasks[index].period);
+//	tasksPeriod = gcd(tasksPeriod, tasks[index].period);
 }
 
 
@@ -101,7 +101,7 @@ void TimerISR(){
 			tasks[i].state = tasks[i].TickFct(tasks[i].state);
 			tasks[i].elapsedTime = 0;
 		}
-		tasks[i].elapsedTime += tasks[i].period;
+		tasks[i].elapsedTime += tasksPeriod;
 	}
 }
 
