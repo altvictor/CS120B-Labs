@@ -22,12 +22,14 @@ const unsigned char tasksSize = 3;
 Task tasks[tasksSize];
 unsigned char tasksPeriod = 1000;
 
+unsigned char outputThree = 0x00;
+unsigned char outputBlink = 0x00;
+
 void initializeTasks();
 
 int main()
 {
 	//initialize
-
 	DDRB = 0xFF; PORTB = 0x00;
 	TimerSet(tasksPeriod);
 	TimerOn();
