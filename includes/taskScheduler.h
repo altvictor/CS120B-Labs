@@ -1,6 +1,6 @@
 //taskScheduler.h
 
-struct Task{
+typedef struct Task{
 	int state;
 	unsigned long period;
 	unsigned long elapsedTime;

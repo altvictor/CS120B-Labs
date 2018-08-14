@@ -1,4 +1,10 @@
 //timer.h
+#include "taskScheduler.h"
+
+const unsigned char tasksSize;
+
+unsigned long _avr_timer_M = 1;
+unsigned long _avr_timer_cntcurr = 0;
 
 void TimerSet(unsigned long period){
 	_avr_timer_M = period;

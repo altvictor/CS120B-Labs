@@ -15,12 +15,11 @@
 #include "BlinkLED.h"
 #include "CombineLED.h"
 
-unsigned long _avr_timer_M = 1;
-unsigned long _avr_timer_cntcurr = 0;
+typedef struct Task;
 
 const unsigned char tasksSize = 3;
 Task tasks[tasksSize];
-unsigned char tasksPeriod = 1000;
+unsigned long tasksPeriod = 1000;
 
 unsigned char outputThree = 0x00;
 unsigned char outputBlink = 0x00;
