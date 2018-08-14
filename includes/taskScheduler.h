@@ -6,5 +6,3 @@ typedef struct Task{
 	unsigned long elapsedTime;
 	int (*TickFct)(int);
 };
-
-

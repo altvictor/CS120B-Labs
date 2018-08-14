@@ -1,4 +1,6 @@
 //BlinkLED.c
+#include "BlinkLED.h"
+#include "main.c"
 
 enum BlinkLED_States {start, lightOn, lightOff};
 
