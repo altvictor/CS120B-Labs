@@ -29,8 +29,10 @@ void initializeTasks();
 
 int main()
 {
-	//initialize
 	DDRB = 0xFF; PORTB = 0x00;
+
+	//initialize
+	initializeTasks();
 	TimerSet(tasksPeriod);
 	TimerOn();
 		
@@ -44,17 +46,19 @@ void initializeTasks(){
 	tasks[index].period = tasksPeriod;
 	tasks[index].elapsedTime = 0;
 	tasks[index].TickFct = &ThreeLED_tick;
+	tasksPeriod = tasks[index].period;
 	index++;
 	
 	tasks[index].state = -1;
 	tasks[index].period = tasksPeriod;
 	tasks[index].elapsedTime = 0;
 	tasks[index].TickFct = &BlinkLED_tick;
+	tasksPeriod = gcd(tasksPeriod, tasks[index].period);
 	index++;
 	
 	tasks[index].state = -1;
 	tasks[index].period = tasksPeriod;
 	tasks[index].elapsedTime = 0;
 	tasks[index].TickFct = &CombineLED_tick;
-		
+	tasksPeriod = gcd(tasksPeriod, tasks[index].period);
 }
