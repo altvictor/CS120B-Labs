@@ -1,4 +1,6 @@
 //CombineLED
+#include "CombineLED.h"
+#include "main.c"
 
 enum CombineLED_States {start, display};
 
