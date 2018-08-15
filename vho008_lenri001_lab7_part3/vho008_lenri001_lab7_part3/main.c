@@ -85,7 +85,7 @@ void initializeTasks(){
 	index++;
 	
 	tasks[index].state = -1;
-	tasks[index].period = 100;
+	tasks[index].period = 1;
 	tasks[index].elapsedTime = 0;
 	tasks[index].TickFct = &CombineLED_tick;
 //	tasksPeriod = gcd(tasksPeriod, tasks[index].period);
@@ -225,6 +225,9 @@ int Speaker_tick(int state){
 		if(button2 == 0x04){
 			state = spkr_On;	
 		}
+		else{
+			state = spkr_Off;
+		}
 		break;
 		default:
 		state = spkr_Start;
@@ -246,7 +249,6 @@ int Speaker_tick(int state){
 
 enum CombineLED_States {Combine_start, display};
 	
-
 int CombineLED_tick(int state){
 	unsigned char tmpB = 0x00;
 	
