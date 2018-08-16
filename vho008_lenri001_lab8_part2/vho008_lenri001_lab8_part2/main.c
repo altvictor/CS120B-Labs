@@ -2,7 +2,7 @@
  * Victor Ho
  * Luis Enriquez-Contreras
  * Lab Section: 21
- * Assignment: Lab 8 Exercise 1
+ * Assignment: Lab 8 Exercise 2
  *
  * I acknowledge all content contained herein, excluding template or example code, is my own original work.
  */ 

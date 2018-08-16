@@ -2,7 +2,7 @@
  * Victor Ho
  * Luis Enriquez-Contreras
  * Lab Section: 21
- * Assignment: Lab 8 Exercise 1
+ * Assignment: Lab 8 Exercise 3
  *
  * I acknowledge all content contained herein, excluding template or example code, is my own original work.
  */ 
@@ -20,6 +20,8 @@ int main(void)
 	//initialize
 	unsigned char tmpB = 0x00;
 	unsigned char tmpD = 0x00;
+	unsigned short threshold = 0x0033; //MAX = 0x3F (63), MIN = 0x23 (35)
+	unsigned char LEDtoggle = 0x00;
 	ADC_init();
 
     while (1) 
@@ -28,6 +30,10 @@ int main(void)
 
 		tmpB = (char)x;
 		tmpD = (char)(x >> 8);
+		
+		LEDtoggle = (x < threshold) ? 0x00: 0x01;
+		tmpD += (LEDtoggle << 1);
+	
 		PORTB = tmpB;
 		PORTD = tmpD;
     }
