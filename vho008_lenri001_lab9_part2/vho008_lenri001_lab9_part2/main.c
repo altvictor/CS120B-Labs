@@ -98,10 +98,7 @@ int TickFct_Buttons(int state){
 			state = OnWait;
 			break;
 		case OnWait:
-			if (A0){
-				state = OnWait;
-			}
-			else if (!A0){
+			if (!A0){
 				state = start;
 			}
 			else {
