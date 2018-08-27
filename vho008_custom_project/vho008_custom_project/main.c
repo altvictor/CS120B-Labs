@@ -29,7 +29,7 @@ unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' 
                               '_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_', NULL};
 unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
 unsigned char gameOver;
-unsigned short score;
+unsigned char score;
 unsigned char P1position;
 unsigned char numThings;
 
@@ -40,16 +40,17 @@ unsigned char numThings;
 #define A4 (~PINA & 0x10)
 
 //states
-enum tick_Player1 {walk, jump, duck};
+enum tick_Player1 {walk, jump, duck, p1stop};
 int tick_Player1 (int state);
 
-enum tick_Player2 {idle, fireTop, fireMid, fireBot};
+enum tick_Player2 {idle, fireTop, fireMid, fireBot, p2stop};
 int tick_Player2 (int state);
 
-enum tick_Stuff {start, move};
+enum tick_Stuff {start, move, stop};
 int tick_Stuff (int state);
 
-enum tick_Game {init, play, finish};
+enum tick_Game {init, play, result};
+int tick_Game (int state);
 
 enum tick_Display {clear, display};
 int tick_Display (int state);
@@ -64,7 +65,7 @@ void TimerISR();
 ISR(TIMER1_COMPA_vect);
 void TimerSet(unsigned long M);
 
-#define taskSize 4
+#define taskSize 5
 task tasks[taskSize];
 
 
@@ -83,10 +84,15 @@ int main(void)
 	tasks[i].TickFct = &tick_Player2;	
     i++;
 	tasks[i].state = -1;
-	tasks[i].period = 400;
+	tasks[i].period = 200;//400 for actual
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Stuff;
     i++;
+	tasks[i].state = -1;
+	tasks[i].period = 200;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &tick_Game;
+	i++;
     tasks[i].state = -1;
     tasks[i].period = 200;
     tasks[i].elapsedTime = 0;
@@ -114,7 +120,10 @@ int tick_Player1 (int state) {
     static unsigned char duration;
     switch (state) {//transitions
         case walk:
-            if (A0){
+			if (gameOver){
+				state = p1stop;
+			}
+            else if (A0){
                 state = jump;
             }
             else if (A1){
@@ -125,7 +134,10 @@ int tick_Player1 (int state) {
             }
             break;
         case jump:
-            if (duration < 8){
+			if (gameOver){
+				state = p1stop;
+			}
+            else if (duration < 8){
                 state = jump;
             }
             else{
@@ -133,8 +145,16 @@ int tick_Player1 (int state) {
             }
             break;
         case duck:
-            state = A1 ? duck : walk;
+			if (gameOver){
+				state = p1stop;
+			}
+			else {
+				state = A1 ? duck : walk;
+			}
             break;
+		case p1stop:
+			state = gameOver ? p1stop : walk;
+			break;
         default:
             state = walk;
             break;
@@ -152,6 +172,8 @@ int tick_Player1 (int state) {
         case duck:
             P1position = 34;
             break;
+		case p1stop:
+			break;
         default:
             break;
     }
@@ -162,7 +184,10 @@ int tick_Player2 (int state) {
     static unsigned char charge;
     switch (state) {//transitions
         case idle:
-            if (charge < 6){
+			if (gameOver){
+				state = p2stop;
+			}
+            else if (charge < 6){
                 state = idle;
             }
             else {
@@ -181,14 +206,11 @@ int tick_Player2 (int state) {
             }                
             break;
         case fireTop:
-            state = idle;
-            break;
-        case fireMid:
-            state = idle;
-            break;
+        case fireMid:;
         case fireBot:
-            state = idle;
-            break;
+		case p2stop:
+			state = gameOver ? p2stop : idle;
+			break;
         default:
             state = idle;
             charge = 0;
@@ -206,14 +228,16 @@ int tick_Player2 (int state) {
             break;
         case fireMid:
             charge = 0;
-            things[numThings] = 32;
+            things[numThings] = 48;
             numThings++;
             break;
         case fireBot:
             charge = 0;
-            things[numThings] = 48;
+            things[numThings] = 32;
             numThings++;
             break;
+		case p2stop:
+			break;
         default:
             break;
     }
@@ -226,8 +250,11 @@ int tick_Stuff (int state) {
             state = move;
             break;
         case move:
-            state = move;
+            state = gameOver ? stop : move;
             break;
+		case stop:
+			state = gameOver ? stop : start;
+			break;
         default:
             state = start;
             break;
@@ -248,10 +275,51 @@ int tick_Stuff (int state) {
                 }                    
             }
             break;
+		case stop:
+			break;
         default:
             break;
     }
     return state;
+}
+
+int tick_Game (int state) {
+	switch (state) { //transitions
+		case init:
+			state = play;
+			break;
+		case play:
+			state = gameOver ? result : play;
+			break;
+		case result:
+			state = gameOver ? result : init;
+			break;
+		default:
+			state = init;
+			break;
+	}
+	
+	switch (state) { //actions
+		case init:
+			score = 0;
+			gameOver = 0;
+			break;
+		case play:
+			for (unsigned char j = 0; j < numThings; j++){
+				if (P1position == things[j]){
+					gameOver = 1;
+				}
+				else if ((things[j]-2) % 16 == 0){
+					score++;
+				}
+			}
+			break;
+		case result:
+			break;
+		default:
+			break;
+	}
+	return state;
 }
 
 int tick_Display (int state) {
@@ -271,10 +339,10 @@ int tick_Display (int state) {
         case clear:
         	LCD_ClearScreen();
         	LCD_DisplayString(1, background);
+			LCD_DisplayString(1, "START GAME");
             break;
         case display:
             LCD_DisplayString(1, background);
-			//LCD_ClearScreen();
 			//player 1
 			if (P1position < 33){
 				LCD_Cursor(P1position);
@@ -297,6 +365,8 @@ int tick_Display (int state) {
 					LCD_WriteData('^');
 				}
             }
+			//score
+			PORTB = score;
             break;
         default:
             break;
