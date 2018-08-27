@@ -49,6 +49,8 @@ int tick_Player2 (int state);
 enum tick_Stuff {start, move};
 int tick_Stuff (int state);
 
+enum tick_Game {init, play, finish};
+
 enum tick_Display {clear, display};
 int tick_Display (int state);
 
@@ -62,7 +64,7 @@ void TimerISR();
 ISR(TIMER1_COMPA_vect);
 void TimerSet(unsigned long M);
 
-#define taskSize 6
+#define taskSize 4
 task tasks[taskSize];
 
 
@@ -70,21 +72,21 @@ int main(void)
 {
 	//declare tasks
 	unsigned char i = 0;
-// 	tasks[i].state = -1;
-// 	tasks[i].period = 200;
-// 	tasks[i].elapsedTime = 0;
-// 	tasks[i].TickFct = &tick_Player1;
-// 	i++;
-// 	tasks[i].state = -1;
-// 	tasks[i].period = 200;
-// 	tasks[i].elapsedTime = 0;
-// 	tasks[i].TickFct = &tick_Player2;	
-//     i++;
-// 	tasks[i].state = -1;
-// 	tasks[i].period = 200;
-// 	tasks[i].elapsedTime = 0;
-// 	tasks[i].TickFct = &tick_Stuff;
-//     i++;
+	tasks[i].state = -1;
+	tasks[i].period = 200;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &tick_Player1;
+	i++;
+	tasks[i].state = -1;
+	tasks[i].period = 200;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &tick_Player2;	
+    i++;
+	tasks[i].state = -1;
+	tasks[i].period = 200;
+	tasks[i].elapsedTime = 0;
+	tasks[i].TickFct = &tick_Stuff;
+    i++;
     tasks[i].state = -1;
     tasks[i].period = 200;
     tasks[i].elapsedTime = 0;
@@ -98,9 +100,10 @@ int main(void)
 	DDRD = 0xFF; PORTD = 0x00;
 	
 	//initialize
-    TimerOn();
     TimerSet(100);
+    TimerOn();
 	LCD_init();
+	LCD_WriteCommand(0x0C);
 
     gameOver = 0;
     P1position = 17;
@@ -275,7 +278,7 @@ int tick_Display (int state) {
             LCD_Cursor(P1position);
             LCD_WriteData('&');
             for (unsigned char j = 0; j < numThings; j++){
-                LCD_Cursor(j);
+                LCD_Cursor(things[j]);
                 LCD_WriteData('*');
             }
             break;
