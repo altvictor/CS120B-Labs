@@ -25,9 +25,9 @@ char customChar[] = {
 };
 
 //global variables
-unsigned char background[] = {'-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-',
+unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
                               '_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_', NULL};
-unsigned char things[5] = {0, 0, 0, 0, NULL};
+unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
 unsigned char gameOver;
 unsigned short score;
 unsigned char P1position;
@@ -73,7 +73,7 @@ int main(void)
 	//declare tasks
 	unsigned char i = 0;
 	tasks[i].state = -1;
-	tasks[i].period = 200;
+	tasks[i].period = 100;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player1;
 	i++;
@@ -83,7 +83,7 @@ int main(void)
 	tasks[i].TickFct = &tick_Player2;	
     i++;
 	tasks[i].state = -1;
-	tasks[i].period = 200;
+	tasks[i].period = 400;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Stuff;
     i++;
@@ -106,7 +106,7 @@ int main(void)
 	LCD_WriteCommand(0x0C);
 
     gameOver = 0;
-    P1position = 17;
+    P1position = 18;
     while (1) {}
 }
 
@@ -125,7 +125,7 @@ int tick_Player1 (int state) {
             }
             break;
         case jump:
-            if (A0 && duration < 2){
+            if (duration < 8){
                 state = jump;
             }
             else{
@@ -142,15 +142,15 @@ int tick_Player1 (int state) {
     
     switch (state) { //actions
         case walk:
-            P1position = 17;
+            P1position = 18;
             duration = 0;
             break;
         case jump:
-            P1position = 1;
+            P1position = 2;
             duration++;
             break;
         case duck:
-            P1position = 33;
+            P1position = 34;
             break;
         default:
             break;
@@ -162,7 +162,7 @@ int tick_Player2 (int state) {
     static unsigned char charge;
     switch (state) {//transitions
         case idle:
-            if (charge < 3){
+            if (charge < 6){
                 state = idle;
             }
             else {
@@ -273,13 +273,29 @@ int tick_Display (int state) {
         	LCD_DisplayString(1, background);
             break;
         case display:
-            LCD_ClearScreen();
             LCD_DisplayString(1, background);
-            LCD_Cursor(P1position);
-            LCD_WriteData('&');
+			//LCD_ClearScreen();
+			//player 1
+			if (P1position < 33){
+				LCD_Cursor(P1position);
+				LCD_WriteData('&');
+			}
+			else {
+				LCD_Cursor(P1position-16);
+				LCD_WriteData('o');
+			}
+			//objects
             for (unsigned char j = 0; j < numThings; j++){
-                LCD_Cursor(things[j]);
-                LCD_WriteData('*');
+				if (things[j] < 33){
+					LCD_Cursor(things[j]);
+					LCD_WriteData('x');
+				}
+				else{
+					LCD_Cursor(things[j]-32);
+					LCD_WriteData('v');
+					LCD_Cursor(things[j]-16);
+					LCD_WriteData('^');
+				}
             }
             break;
         default:
