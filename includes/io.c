@@ -68,8 +68,17 @@ void LCD_Cursor(unsigned char column) {
    }
 }
 
-void delay_ms(int miliSec) //for 8 Mhz crystal
+void LCD_Custom_Char (unsigned char loc, unsigned char *msg){
+    unsigned char i;
+    if (loc < 8){
+        LCD_WriteCommand(0x40 + (loc*8));
+        for (i = 0; i < 8; i++){
+            LCD_WriteData(msg[i]);
+        }
+    }
+}
 
+void delay_ms(int miliSec) //for 8 Mhz crystal
 {
     int i,j;
     for(i=0;i<miliSec;i++)

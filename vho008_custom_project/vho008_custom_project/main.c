@@ -20,9 +20,19 @@ char customChar[] = {
 	0x0F,
 	0x0E,
 	0x0E,
-	0x1A,
-    NULL
+	0x1A
 };
+
+char customCharDuck[] = {
+    0x00,
+    0x00,
+    0x00,
+    0x07,
+    0x05,
+    0x1f,
+    0x18,
+    0x10
+}
 
 //global variables
 unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
@@ -38,6 +48,7 @@ unsigned char numThings;
 #define A2 (~PINA & 0x04)
 #define A3 (~PINA & 0x08)
 #define A4 (~PINA & 0x10)
+#define A5 (~PINA & 0x20)
 
 //states
 enum tick_Player1 {walk, jump, duck, p1stop};
@@ -67,7 +78,6 @@ void TimerSet(unsigned long M);
 
 #define taskSize 5
 task tasks[taskSize];
-
 
 int main(void)
 {
@@ -106,13 +116,15 @@ int main(void)
 	DDRD = 0xFF; PORTD = 0x00;
 	
 	//initialize
-    TimerSet(100);
+    TimerSet(tasksPeriod);
     TimerOn();
 	LCD_init();
 	LCD_WriteCommand(0x0C);
+    LCD_Custom_Char(1, customChar);
 
     gameOver = 0;
     P1position = 18;
+
     while (1) {}
 }
 
@@ -308,6 +320,7 @@ int tick_Game (int state) {
 			for (unsigned char j = 0; j < numThings; j++){
 				if (P1position == things[j]){
 					gameOver = 1;
+                    things[j]++;
 				}
 				else if ((things[j]-2) % 16 == 0){
 					score++;
@@ -346,7 +359,7 @@ int tick_Display (int state) {
 			//player 1
 			if (P1position < 33){
 				LCD_Cursor(P1position);
-				LCD_WriteData('&');
+				LCD_WriteData(1);
 			}
 			else {
 				LCD_Cursor(P1position-16);
