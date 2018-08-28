@@ -8,7 +8,6 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/eeprom.h>
 #include "io.c"
 #include "scheduler.h"
 
@@ -32,12 +31,56 @@ char customCharDuck[] = {
     0x1f,
     0x18,
     0x10
-}
+};
+
+char customCactus[] = {
+	0x02,
+	0x07,
+	0x17,
+	0x17,
+	0x1F,
+	0x07,
+	0x07,
+	0x07
+};
+
+char customGhost[] = {
+	0x0E,
+	0x1F,
+	0x15,
+	0x1F,
+	0x1F,
+	0x15,
+	0x00,
+	0x00,
+};
+
+char customGhostTop = {
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x0E,
+	0x1F,
+	0x1F
+};
+
+char customGhostBot = {
+	0x1F,
+	0x15,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00
+};
 
 //global variables
 unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
                               '_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_', NULL};
-unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
+unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 unsigned char gameOver;
 unsigned char score;
 unsigned char P1position;
@@ -94,7 +137,7 @@ int main(void)
 	tasks[i].TickFct = &tick_Player2;	
     i++;
 	tasks[i].state = -1;
-	tasks[i].period = 200;//400 for actual
+	tasks[i].period = 400;//400 for actual
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Stuff;
     i++;
@@ -121,7 +164,12 @@ int main(void)
 	LCD_init();
 	LCD_WriteCommand(0x0C);
     LCD_Custom_Char(1, customChar);
-
+	LCD_Custom_Char(2, customCharDuck);
+	LCD_Custom_Char(3, customCactus);
+	LCD_Custom_Char(4, customGhost);
+	LCD_Custom_Char(5, customGhostTop);
+	LCD_Custom_Char(6, customGhostBot);	
+	
     gameOver = 0;
     P1position = 18;
 
@@ -199,7 +247,7 @@ int tick_Player2 (int state) {
 			if (gameOver){
 				state = p2stop;
 			}
-            else if (charge < 6){
+            else if (charge < 7){
                 state = idle;
             }
             else {
@@ -240,12 +288,12 @@ int tick_Player2 (int state) {
             break;
         case fireMid:
             charge = 0;
-            things[numThings] = 48;
+            things[numThings] = 32;
             numThings++;
             break;
         case fireBot:
             charge = 0;
-            things[numThings] = 32;
+            things[numThings] = 48;
             numThings++;
             break;
 		case p2stop:
@@ -278,6 +326,7 @@ int tick_Stuff (int state) {
         case move:
             for (unsigned char j = 0; j < numThings; j++){
                 things[j]--;
+				//deleting after it moves offscreen
                 if (things[j] % 16 == 0){
                     for (unsigned char k = j; k < numThings; k++){
                         things[k] = things[k+1];
@@ -318,11 +367,17 @@ int tick_Game (int state) {
 			break;
 		case play:
 			for (unsigned char j = 0; j < numThings; j++){
-				if (P1position == things[j]){
+				unsigned char loc = things[j];
+				//collision
+				if (things[j] > 32){
+					loc -= 16;
+				}
+				if (P1position == loc || P1position == things[j]){
 					gameOver = 1;
                     things[j]++;
 				}
-				else if ((things[j]-2) % 16 == 0){
+				//score
+				else if ((loc-2) % 16 == 0){
 					score++;
 				}
 			}
@@ -356,6 +411,23 @@ int tick_Display (int state) {
             break;
         case display:
             LCD_DisplayString(1, background);
+			//objects
+            for (unsigned char j = 0; j < numThings; j++){
+				if (things[j] < 17){
+					LCD_Cursor(things[j]);
+					LCD_WriteData(4);
+				}
+				else if (things[j] < 33){
+					LCD_Cursor(things[j]-16);
+					LCD_WriteData(5);
+					LCD_Cursor(things[j]);
+					LCD_WriteData(6);
+				}
+				else {
+					LCD_Cursor(things[j]-16);
+					LCD_WriteData(3);
+				}
+            }
 			//player 1
 			if (P1position < 33){
 				LCD_Cursor(P1position);
@@ -363,21 +435,8 @@ int tick_Display (int state) {
 			}
 			else {
 				LCD_Cursor(P1position-16);
-				LCD_WriteData('o');
+				LCD_WriteData(2);
 			}
-			//objects
-            for (unsigned char j = 0; j < numThings; j++){
-				if (things[j] < 33){
-					LCD_Cursor(things[j]);
-					LCD_WriteData('x');
-				}
-				else{
-					LCD_Cursor(things[j]-32);
-					LCD_WriteData('v');
-					LCD_Cursor(things[j]-16);
-					LCD_WriteData('^');
-				}
-            }
 			//score
 			PORTB = score;
             break;
