@@ -93,16 +93,16 @@ int tick_Player2 (int state);
 enum tick_Stuff {start, move, stop};
 int tick_Stuff (int state);
 
-enum tick_Game {init, play, result};
+enum tick_Game {init, play, finish};
 int tick_Game (int state);
 
-enum tick_Display {clear, display};
+enum tick_Display {clear, display, result};
 int tick_Display (int state);
 
 //timer
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
-unsigned char tasksPeriod = 100;
+unsigned char tasksPeriod = 50;
 void TimerOn();
 void TimerOff();
 void TimerISR();
@@ -117,12 +117,12 @@ int main(void)
 	//declare tasks
 	unsigned char i = 0;
 	tasks[i].state = -1;
-	tasks[i].period = 100;
+	tasks[i].period = 50;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player1;
 	i++;
 	tasks[i].state = -1;
-	tasks[i].period = 100;
+	tasks[i].period = 50;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player2;	
     i++;
@@ -186,7 +186,7 @@ int tick_Player1 (int state) {
 			if (gameOver){
 				state = p1stop;
 			}
-            else if (duration < 8){
+            else if (duration < 12){
                 state = jump;
             }
             else{
@@ -237,7 +237,7 @@ int tick_Player2 (int state) {
 			if (gameOver){
 				state = p2stop;
 			}
-            else if (charge < 15){
+            else if (charge < 22){
                 state = idle;
             }
             else {
@@ -367,10 +367,10 @@ int tick_Game (int state) {
 			state = play;
 			break;
 		case play:
-			state = gameOver ? result : play;
+			state = gameOver ? finish : play;
 			break;
-		case result:
-			state = gameOver ? result : init;
+		case finish:
+			state = gameOver ? finish : init;
 			break;
 		default:
 			state = init;
@@ -400,7 +400,7 @@ int tick_Game (int state) {
 				}
 			}
 			break;
-		case result:
+		case finish:
 			break;
 		default:
 			break;
@@ -414,8 +414,11 @@ int tick_Display (int state) {
             state = display;
             break;
         case display:
-            state = display;
+            state = gameOver ? result : display;
             break;
+		case result:
+			state = gameOver ? result : clear;
+			break;
         default:
             state = clear;
             break;
@@ -473,6 +476,9 @@ int tick_Display (int state) {
 			//score
 			PORTB = score;
             break;
+		case result:
+			
+			break;
         default:
             break;
     }
