@@ -459,13 +459,13 @@ int tick_Display (int state) {
 				LCD_WriteData(3);
 			}
 			else if (P2position < 33){
-				LCD_Cursor(P2position);
+				LCD_Cursor(P2position-16);
 				LCD_WriteData(4);
 				LCD_Cursor(P2position);
 				LCD_WriteData(5);
 			}
 			else {
-				LCD_Cursor(P2position);
+				LCD_Cursor(P2position-16);
 				LCD_WriteData(3);
 			}
 			//score
