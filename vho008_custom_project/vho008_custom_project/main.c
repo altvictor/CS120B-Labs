@@ -33,17 +33,6 @@ char customCharDuck[] = {
     0x10
 };
 
-char customCactus[] = {
-	0x02,
-	0x07,
-	0x17,
-	0x17,
-	0x1F,
-	0x07,
-	0x07,
-	0x07
-};
-
 char customGhost[] = {
 	0x0E,
 	0x1F,
@@ -84,6 +73,7 @@ unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 unsigned char gameOver;
 unsigned char score;
 unsigned char P1position;
+unsigned char P2position;
 unsigned char numThings;
 
 #define A0 (~PINA & 0x01)
@@ -97,7 +87,7 @@ unsigned char numThings;
 enum tick_Player1 {walk, jump, duck, p1stop};
 int tick_Player1 (int state);
 
-enum tick_Player2 {idle, fireTop, fireMid, fireBot, p2stop};
+enum tick_Player2 {idle, moveUp, moveUpWait, fire, moveDown, moveDownWait, p2stop};
 int tick_Player2 (int state);
 
 enum tick_Stuff {start, move, stop};
@@ -112,7 +102,7 @@ int tick_Display (int state);
 //timer
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
-unsigned char tasksPeriod = 100;
+unsigned char tasksPeriod = 50;
 void TimerOn();
 void TimerOff();
 void TimerISR();
@@ -127,12 +117,12 @@ int main(void)
 	//declare tasks
 	unsigned char i = 0;
 	tasks[i].state = -1;
-	tasks[i].period = 100;
+	tasks[i].period = 50;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player1;
 	i++;
 	tasks[i].state = -1;
-	tasks[i].period = 200;
+	tasks[i].period = 50;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player2;	
     i++;
@@ -142,7 +132,7 @@ int main(void)
 	tasks[i].TickFct = &tick_Stuff;
     i++;
 	tasks[i].state = -1;
-	tasks[i].period = 200;
+	tasks[i].period = 400;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Game;
 	i++;
@@ -165,14 +155,12 @@ int main(void)
 	LCD_WriteCommand(0x0C);
     LCD_Custom_Char(1, customChar);
 	LCD_Custom_Char(2, customCharDuck);
-	LCD_Custom_Char(3, customCactus);
-	LCD_Custom_Char(4, customGhost);
-	LCD_Custom_Char(5, customGhostTop);
-	LCD_Custom_Char(6, customGhostBot);	
+	LCD_Custom_Char(3, customGhost);
+	LCD_Custom_Char(4, customGhostTop);
+	LCD_Custom_Char(5, customGhostBot);	
 	
     gameOver = 0;
-    P1position = 18;
-
+	
     while (1) {}
 }
 
@@ -197,7 +185,7 @@ int tick_Player1 (int state) {
 			if (gameOver){
 				state = p1stop;
 			}
-            else if (duration < 8){
+            else if (duration < 16){
                 state = jump;
             }
             else{
@@ -217,6 +205,7 @@ int tick_Player1 (int state) {
 			break;
         default:
             state = walk;
+			P1position = 18;
             break;
     }
     
@@ -247,33 +236,55 @@ int tick_Player2 (int state) {
 			if (gameOver){
 				state = p2stop;
 			}
-            else if (charge < 7){
+            else if (charge < 30){
                 state = idle;
             }
             else {
                 if (A2){
-                state = fireTop;
+                state = moveUp;
                 }
                 else if (A3){
-                    state = fireMid;
+                    state = fire;
                 }
                 else if (A4){
-                    state = fireBot;
+                    state = moveDown;
                 }
                 else {
                     state = idle;
                 }
             }                
             break;
-        case fireTop:
-        case fireMid:;
-        case fireBot:
+        case moveUp:
+			state = gameOver ? p2stop : moveUpWait;
+			break;
+        case moveUpWait:
+			if (!A2){
+				state = gameOver ? p2stop : idle;
+			}
+			else {
+				state = gameOver ? p2stop : moveUpWait;
+			}
+			break;
+		case fire:
+			break;
+        case moveDown:
+			state = gameOver ? p2stop : moveDownWait;
+			break;
+		case moveDownWait:
+			if (!A4){
+				state = gameOver ? p2stop : idle;
+			}
+			else {
+				state = gameOver ? p2stop : moveDownWait;
+			}
+			break;
 		case p2stop:
 			state = gameOver ? p2stop : idle;
 			break;
         default:
             state = idle;
             charge = 0;
+			P2position = 15;
             break;
     }
     
@@ -281,21 +292,25 @@ int tick_Player2 (int state) {
         case idle:
             charge++;
             break;
-        case fireTop:
+        case moveUp:
+            if (P2position > 15){
+				P2position -= 16;
+			}
+            break;
+		case moveUpWait:
+			break;
+        case fire:
             charge = 0;
-            things[numThings] = 16;
+            things[numThings] = P2position;
             numThings++;
             break;
-        case fireMid:
-            charge = 0;
-            things[numThings] = 32;
-            numThings++;
+        case moveDown:
+            if (P2position < 47){
+				P2position += 16;
+			}
             break;
-        case fireBot:
-            charge = 0;
-            things[numThings] = 48;
-            numThings++;
-            break;
+		case moveDownWait:
+			break;
 		case p2stop:
 			break;
         default:
@@ -369,12 +384,13 @@ int tick_Game (int state) {
 			for (unsigned char j = 0; j < numThings; j++){
 				unsigned char loc = things[j];
 				//collision
-				if (things[j] > 32){
-					loc -= 16;
-				}
 				if (P1position == loc || P1position == things[j]){
 					gameOver = 1;
                     things[j]++;
+				}
+				else if (things[j] > 32 && P1position == (things[j]-16)){
+					gameOver = 1;
+					things[j]++;				
 				}
 				//score
 				else if ((loc-2) % 16 == 0){
@@ -415,13 +431,13 @@ int tick_Display (int state) {
             for (unsigned char j = 0; j < numThings; j++){
 				if (things[j] < 17){
 					LCD_Cursor(things[j]);
-					LCD_WriteData(4);
+					LCD_WriteData(3);
 				}
 				else if (things[j] < 33){
 					LCD_Cursor(things[j]-16);
-					LCD_WriteData(5);
+					LCD_WriteData(4);
 					LCD_Cursor(things[j]);
-					LCD_WriteData(6);
+					LCD_WriteData(5);
 				}
 				else {
 					LCD_Cursor(things[j]-16);
@@ -436,6 +452,21 @@ int tick_Display (int state) {
 			else {
 				LCD_Cursor(P1position-16);
 				LCD_WriteData(2);
+			}
+			//player 2
+			if (P2position < 17){
+				LCD_Cursor(P2position);
+				LCD_WriteData(3);
+			}
+			else if (P2position < 33){
+				LCD_Cursor(P2position);
+				LCD_WriteData(4);
+				LCD_Cursor(P2position);
+				LCD_WriteData(5);
+			}
+			else {
+				LCD_Cursor(P2position);
+				LCD_WriteData(3);
 			}
 			//score
 			PORTB = score;
