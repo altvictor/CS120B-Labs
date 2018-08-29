@@ -41,21 +41,21 @@ char customGhost[] = {
 	0x1F,
 	0x15,
 	0x00,
-	0x00,
+	0x00
 };
 
-char customGhostTop = {
+char customGhostTop[] = {
 	0x00,
 	0x00,
 	0x00,
 	0x00,
 	0x00,
 	0x0E,
-	0x1F,
+	0x15,
 	0x1F
 };
 
-char customGhostBot = {
+char customGhostBot[] = {
 	0x1F,
 	0x15,
 	0x00,
@@ -69,7 +69,7 @@ char customGhostBot = {
 //global variables
 unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
                               '_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_', NULL};
-unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
 unsigned char gameOver;
 unsigned char score;
 unsigned char P1position;
@@ -102,7 +102,7 @@ int tick_Display (int state);
 //timer
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
-unsigned char tasksPeriod = 50;
+unsigned char tasksPeriod = 100;
 void TimerOn();
 void TimerOff();
 void TimerISR();
@@ -117,12 +117,12 @@ int main(void)
 	//declare tasks
 	unsigned char i = 0;
 	tasks[i].state = -1;
-	tasks[i].period = 50;
+	tasks[i].period = 100;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player1;
 	i++;
 	tasks[i].state = -1;
-	tasks[i].period = 50;
+	tasks[i].period = 100;
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player2;	
     i++;
@@ -158,6 +158,7 @@ int main(void)
 	LCD_Custom_Char(3, customGhost);
 	LCD_Custom_Char(4, customGhostTop);
 	LCD_Custom_Char(5, customGhostBot);	
+	LCD_WriteCommand(0x80);
 	
     gameOver = 0;
 	
@@ -185,7 +186,7 @@ int tick_Player1 (int state) {
 			if (gameOver){
 				state = p1stop;
 			}
-            else if (duration < 16){
+            else if (duration < 8){
                 state = jump;
             }
             else{
@@ -236,7 +237,7 @@ int tick_Player2 (int state) {
 			if (gameOver){
 				state = p2stop;
 			}
-            else if (charge < 30){
+            else if (charge < 15){
                 state = idle;
             }
             else {
@@ -266,6 +267,7 @@ int tick_Player2 (int state) {
 			}
 			break;
 		case fire:
+			state = gameOver ? p2stop : idle;
 			break;
         case moveDown:
 			state = gameOver ? p2stop : moveDownWait;
