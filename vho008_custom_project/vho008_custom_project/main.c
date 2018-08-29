@@ -72,8 +72,11 @@ unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' 
 unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
 unsigned char gameOver;
 unsigned char score;
+unsigned char highScore;
 unsigned char P1position;
+unsigned char P1positionOld;
 unsigned char P2position;
+unsigned char P2positionOld;
 unsigned char numThings;
 
 #define A0 (~PINA & 0x01)
@@ -98,6 +101,10 @@ int tick_Game (int state);
 
 enum tick_Display {clear, display, result};
 int tick_Display (int state);
+
+//EEPROM
+void EEPROM_Write(unsigned int uiAddress, unsigned char ucData);
+unsigned char EEPROM_read(unsigned int uiAddress);
 
 //timer
 unsigned long _avr_timer_M = 1;
@@ -137,7 +144,7 @@ int main(void)
 	tasks[i].TickFct = &tick_Game;
 	i++;
     tasks[i].state = -1;
-    tasks[i].period = 200;
+    tasks[i].period = 100;
     tasks[i].elapsedTime = 0;
     tasks[i].TickFct = &tick_Display;
     i++;
@@ -167,6 +174,7 @@ int main(void)
 
 int tick_Player1 (int state) {
     static unsigned char duration;
+	P1positionOld = P1position;
     switch (state) {//transitions
         case walk:
 			if (gameOver){
@@ -232,6 +240,7 @@ int tick_Player1 (int state) {
 
 int tick_Player2 (int state) {
     static unsigned char charge;
+	P2positionOld = P2position;
     switch (state) {//transitions
         case idle:
 			if (gameOver){
@@ -380,7 +389,6 @@ int tick_Game (int state) {
 	switch (state) { //actions
 		case init:
 			score = 0;
-			gameOver = 0;
 			break;
 		case play:
 			for (unsigned char j = 0; j < numThings; j++){
@@ -429,55 +437,100 @@ int tick_Display (int state) {
         	LCD_ClearScreen();
         	LCD_DisplayString(1, background);
 			LCD_DisplayString(1, "START GAME");
+			highScore = EEPROM_read(1);
             break;
         case display:
-            LCD_DisplayString(1, background);
+            //LCD_DisplayString(1, background);
 			//objects
             for (unsigned char j = 0; j < numThings; j++){
 				if (things[j] < 17){
+					LCD_Cursor(things[j]+1);
+					LCD_WriteData(' ');
+					
 					LCD_Cursor(things[j]);
 					LCD_WriteData(3);
 				}
 				else if (things[j] < 33){
+					LCD_Cursor(things[j]-15);
+					LCD_WriteData(' ');
+					LCD_Cursor(things[j]+1);
+					LCD_WriteData('_');
+					
 					LCD_Cursor(things[j]-16);
 					LCD_WriteData(4);
 					LCD_Cursor(things[j]);
 					LCD_WriteData(5);
 				}
 				else {
+					LCD_Cursor(things[j]-15);
+					LCD_WriteData('_');
+					
 					LCD_Cursor(things[j]-16);
 					LCD_WriteData(3);
 				}
             }
 			//player 1
-			if (P1position < 33){
-				LCD_Cursor(P1position);
-				LCD_WriteData(1);
-			}
-			else {
-				LCD_Cursor(P1position-16);
-				LCD_WriteData(2);
+			if (P1position != P1positionOld){
+				if (P1position < 17){
+					LCD_Cursor(P1position+1);
+					LCD_WriteData(' ');
+					
+					LCD_Cursor(P1position);
+					LCD_WriteData(1);
+				}
+				else if (P1position < 33){
+					LCD_Cursor(P1position+1);
+					LCD_WriteData('_')
+					
+					LCD_Cursor(P1position);
+					LCD_WriteData(1);
+				}
+				else {
+					LCD_Cursor(P1position-15);
+					LCD_WriteData('_');
+					
+					LCD_Cursor(P1position-16);
+					LCD_WriteData(2);
+				}
 			}
 			//player 2
-			if (P2position < 17){
-				LCD_Cursor(P2position);
-				LCD_WriteData(3);
-			}
-			else if (P2position < 33){
-				LCD_Cursor(P2position-16);
-				LCD_WriteData(4);
-				LCD_Cursor(P2position);
-				LCD_WriteData(5);
-			}
-			else {
-				LCD_Cursor(P2position-16);
-				LCD_WriteData(3);
+			if (P2position != P2positionOld){
+				if (P2position < 17){
+					LCD_Cursor(P2position+1);
+					LCD_WriteData(' ');
+					
+					LCD_Cursor(P2position);
+					LCD_WriteData(3);
+				}
+				else if (P2position < 33){
+					LCD_Cursor(P2position-15);
+					LCD_WriteData(' ');
+					LCD_Cursor(P2position+1);
+					LCD_WriteData('_');
+					
+					LCD_Cursor(P2position-16);
+					LCD_WriteData(4);
+					LCD_Cursor(P2position);
+					LCD_WriteData(5);
+				}
+				else {
+					LCD_Cursor(P2position-15);
+					LCD_WriteData('_');
+					
+					LCD_Cursor(P2position-16);
+					LCD_WriteData(3);
+				}
 			}
 			//score
-			PORTB = score;
+			PORTB = highScore;
             break;
 		case result:
-			
+			if (score > highScore){
+				highScore = score;
+			}
+			EEPROM_write(1, highScore);
+			gameOver = 0;
+
 			break;
         default:
             break;
@@ -485,6 +538,35 @@ int tick_Display (int state) {
     return state;
 }
 
+//--------------------------------------------------------------------------------------
+void EEPROM_write(unsigned int uiAddress, unsigned char ucData)
+{
+	/* Wait for completion of previous write */
+	while(EECR & (1<<EEPE))
+	;
+	/* Set up address and Data Registers */
+	EEAR = uiAddress;
+	EEDR = ucData;
+	/* Write logical one to EEMPE */
+	EECR |= (1<<EEMPE);
+	/* Start eeprom write by setting EEPE */
+	EECR |= (1<<EEPE);
+}
+
+unsigned char EEPROM_read(unsigned int uiAddress)
+{
+	/* Wait for completion of previous write */
+	while(EECR & (1<<EEPE))
+	;
+	/* Set up address register */
+	EEAR = uiAddress;
+	/* Start eeprom read by writing EERE */
+	EECR |= (1<<EERE);
+	/* Return data from Data Register */
+	return EEDR;
+}
+
+//--------------------------------------------------------------------------------------
 void TimerOn(){
 	TCCR1B = 0x0B;
 	OCR1A = 125;
