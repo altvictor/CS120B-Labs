@@ -76,7 +76,7 @@ void LCD_Custom_Char (unsigned char loc, unsigned char *msg){
             LCD_WriteData(msg[i]);
         }
     }
-	LCD_WriteCommand(0x80);
+	//LCD_WriteCommand(0x80);
 }
 
 void delay_ms(int miliSec) //for 8 Mhz crystal
