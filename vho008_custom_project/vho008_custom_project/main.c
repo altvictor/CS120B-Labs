@@ -8,6 +8,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
 #include "io.c"
 #include "scheduler.h"
 
@@ -74,13 +75,7 @@ unsigned char gameOver;
 unsigned char score;
 unsigned char highScore;
 unsigned char P1position;
-<<<<<<< HEAD
 unsigned char P2position;
-=======
-unsigned char P1positionOld;
-unsigned char P2position;
-unsigned char P2positionOld;
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
 unsigned char numThings;
 
 #define A0 (~PINA & 0x01)
@@ -94,11 +89,7 @@ unsigned char numThings;
 enum tick_Player1 {walk, jump, duck, p1stop};
 int tick_Player1 (int state);
 
-<<<<<<< HEAD
-enum tick_Player2 {idle, moveUp, fire, moveDown, p2stop};
-=======
 enum tick_Player2 {idle, moveUp, moveUpWait, fire, moveDown, moveDownWait, p2stop};
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
 int tick_Player2 (int state);
 
 enum tick_Stuff {start, move, stop};
@@ -109,10 +100,6 @@ int tick_Game (int state);
 
 enum tick_Display {clear, display, result};
 int tick_Display (int state);
-
-//EEPROM
-void EEPROM_Write(unsigned int uiAddress, unsigned char ucData);
-unsigned char EEPROM_read(unsigned int uiAddress);
 
 //timer
 unsigned long _avr_timer_M = 1;
@@ -137,11 +124,7 @@ int main(void)
 	tasks[i].TickFct = &tick_Player1;
 	i++;
 	tasks[i].state = -1;
-<<<<<<< HEAD
-	tasks[i].period = 100;
-=======
 	tasks[i].period = 50;
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
 	tasks[i].elapsedTime = 0;
 	tasks[i].TickFct = &tick_Player2;	
     i++;
@@ -165,7 +148,7 @@ int main(void)
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 	DDRC = 0xFF; PORTC = 0x00;
-	DDRD = 0xFF; PORTD = 0x00;
+	DDRD = 0xFE; PORTD = 0x01;
 	
 	//initialize
     TimerSet(tasksPeriod);
@@ -177,23 +160,15 @@ int main(void)
 	LCD_Custom_Char(3, customGhost);
 	LCD_Custom_Char(4, customGhostTop);
 	LCD_Custom_Char(5, customGhostBot);	
-<<<<<<< HEAD
-	
-    gameOver = 0;
-    P1position = 18;
-    P2position = 16;
-=======
 	LCD_WriteCommand(0x80);
 	
     gameOver = 0;
 	
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
     while (1) {}
 }
 
 int tick_Player1 (int state) {
     static unsigned char duration;
-	P1positionOld = P1position;
     switch (state) {//transitions
         case walk:
 			if (gameOver){
@@ -224,9 +199,12 @@ int tick_Player1 (int state) {
 			if (gameOver){
 				state = p1stop;
 			}
-			else {
-				state = A1 ? duck : walk;
+			else if (A1) {
+				state = duck;
 			}
+            else {
+                state = walk;
+            }
             break;
 		case p1stop:
 			state = gameOver ? p1stop : walk;
@@ -259,7 +237,12 @@ int tick_Player1 (int state) {
 
 int tick_Player2 (int state) {
     static unsigned char charge;
-	P2positionOld = P2position;
+    if (charge < 22){
+        PORTD = 0x00;
+    }             
+    else {
+        PORTD = 0x01;
+    }
     switch (state) {//transitions
         case idle:
 			if (gameOver){
@@ -284,10 +267,6 @@ int tick_Player2 (int state) {
             }                
             break;
         case moveUp:
-<<<<<<< HEAD
-        case fire:;
-        case moveDown:
-=======
 			state = gameOver ? p2stop : moveUpWait;
 			break;
         case moveUpWait:
@@ -312,50 +291,38 @@ int tick_Player2 (int state) {
 				state = gameOver ? p2stop : moveDownWait;
 			}
 			break;
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
 		case p2stop:
 			state = gameOver ? p2stop : idle;
 			break;
         default:
             state = idle;
             charge = 0;
-			P2position = 15;
+			P2position = 16;
             break;
     }
     
     switch (state) { //actions
         case idle:
-            charge++;
-            break;
-        case moveUp:
-<<<<<<< HEAD
-            if (P2position != 16){
-                P2position -= 16;
+            if (charge < 22){
+                charge++;
             }
             break;
-=======
-            if (P2position > 15){
+        case moveUp:
+            if (P2position > 16){
 				P2position -= 16;
 			}
             break;
 		case moveUpWait:
 			break;
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
         case fire:
             charge = 0;
             things[numThings] = P2position;
             numThings++;
             break;
         case moveDown:
-<<<<<<< HEAD
-            if (P2position != 48){
-                P2position += 16;
-            }
-=======
-            if (P2position < 47){
+            if (P2position < 48){
 				P2position += 16;
 			}
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
             break;
 		case moveDownWait:
 			break;
@@ -394,6 +361,10 @@ int tick_Stuff (int state) {
                     for (unsigned char k = j; k < numThings; k++){
                         things[k] = things[k+1];
                     }
+                    LCD_Cursor(1);
+                    LCD_WriteData(' ');
+                    LCD_Cursor(17);
+                    LCD_WriteData('_');
                     numThings--;
                     j--;
                 }                    
@@ -435,17 +406,10 @@ int tick_Game (int state) {
 					gameOver = 1;
                     things[j]++;
 				}
-<<<<<<< HEAD
-                else if (things[j] > 32 && P1position == (things[j]-16)){
-                    gameOver = 1;
-                    things[j]++;
-                }                    
-=======
 				else if (things[j] > 32 && P1position == (things[j]-16)){
 					gameOver = 1;
 					things[j]++;				
 				}
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
 				//score
 				else if ((loc-2) % 16 == 0){
 					score++;
@@ -479,18 +443,59 @@ int tick_Display (int state) {
     switch (state) { //actions
         case clear:
         	LCD_ClearScreen();
-        	LCD_DisplayString(1, background);
-<<<<<<< HEAD
-            break;
-        case display:
-            LCD_DisplayString(1, background); //change to manually delete each object
-=======
 			LCD_DisplayString(1, "START GAME");
-			highScore = EEPROM_read(1);
+        	LCD_DisplayString(1, background);
+            LCD_Cursor(P1position);
+            LCD_WriteData(1);
+            LCD_Cursor(P2position);
+            LCD_WriteData(3);
+			highScore = eeprom_read_byte(1);
             break;
         case display:
-            //LCD_DisplayString(1, background);
->>>>>>> 37980392d3626cd226d9bcdbcdd43f571b015b6e
+        	//player 1
+        	if (P1position < 17){
+            	LCD_Cursor(P1position+16);
+            	LCD_WriteData('_');
+            			
+            	LCD_Cursor(P1position);
+            	LCD_WriteData(1);
+        	}
+        	else if (P1position < 33){
+            	LCD_Cursor(P1position-16);
+            	LCD_WriteData(' ');
+            			
+            	LCD_Cursor(P1position);
+            	LCD_WriteData(1);
+        	}
+        	else {
+            	LCD_Cursor(P1position-32);
+            	LCD_WriteData(' ');
+            			
+            	LCD_Cursor(P1position-16);
+            	LCD_WriteData(2);
+        	}
+        			
+        	//player 2
+        	if (P2position < 17){
+            	LCD_Cursor(P2position+16);
+            	LCD_WriteData('_');
+            			
+            	LCD_Cursor(P2position);
+            	LCD_WriteData(3);
+        	}
+        	else if (P2position < 33){
+            	LCD_Cursor(P2position-16);
+            	LCD_WriteData(4);
+            	LCD_Cursor(P2position);
+            	LCD_WriteData(5);
+        	}
+        	else {
+            	LCD_Cursor(P2position-32);
+            	LCD_WriteData(' ');
+            			
+            	LCD_Cursor(P2position-16);
+            	LCD_WriteData(3);
+        	}
 			//objects
             for (unsigned char j = 0; j < numThings; j++){
 				if (things[j] < 17){
@@ -518,117 +523,22 @@ int tick_Display (int state) {
 					LCD_Cursor(things[j]-16);
 					LCD_WriteData(3);
 				}
-            }
-			//player 1
-			if (P1position != P1positionOld){
-				if (P1position < 17){
-					LCD_Cursor(P1position+1);
-					LCD_WriteData(' ');
-					
-					LCD_Cursor(P1position);
-					LCD_WriteData(1);
-				}
-				else if (P1position < 33){
-					LCD_Cursor(P1position+1);
-					LCD_WriteData('_')
-					
-					LCD_Cursor(P1position);
-					LCD_WriteData(1);
-				}
-				else {
-					LCD_Cursor(P1position-15);
-					LCD_WriteData('_');
-					
-					LCD_Cursor(P1position-16);
-					LCD_WriteData(2);
-				}
-			}
-			//player 2
-			if (P2position != P2positionOld){
-				if (P2position < 17){
-					LCD_Cursor(P2position+1);
-					LCD_WriteData(' ');
-					
-					LCD_Cursor(P2position);
-					LCD_WriteData(3);
-				}
-				else if (P2position < 33){
-					LCD_Cursor(P2position-15);
-					LCD_WriteData(' ');
-					LCD_Cursor(P2position+1);
-					LCD_WriteData('_');
-					
-					LCD_Cursor(P2position-16);
-					LCD_WriteData(4);
-					LCD_Cursor(P2position);
-					LCD_WriteData(5);
-				}
-				else {
-					LCD_Cursor(P2position-15);
-					LCD_WriteData('_');
-					
-					LCD_Cursor(P2position-16);
-					LCD_WriteData(3);
-				}
-			}
-            //player 2
-            if (P2position < 17){
-                LCD_Cursor(P2position);
-                LCD_WriteData(4);
-            }                
-            else if (P2position < 33){
-				LCD_Cursor(P2position);
-				LCD_WriteData(4);
-				LCD_Cursor(P2position);
-				LCD_WriteData(5);
-	        }
-	        else {
-    	        LCD_Cursor(P2position);
-    	        LCD_WriteData(3);
-	        }                              
+            }   
 			//score
-			PORTB = highScore;
+			PORTB = score;
             break;
 		case result:
 			if (score > highScore){
 				highScore = score;
 			}
-			EEPROM_write(1, highScore);
+			eeprom_write_byte(1, highScore);
 			gameOver = 0;
-
+            
 			break;
         default:
             break;
     }
     return state;
-}
-
-//--------------------------------------------------------------------------------------
-void EEPROM_write(unsigned int uiAddress, unsigned char ucData)
-{
-	/* Wait for completion of previous write */
-	while(EECR & (1<<EEPE))
-	;
-	/* Set up address and Data Registers */
-	EEAR = uiAddress;
-	EEDR = ucData;
-	/* Write logical one to EEMPE */
-	EECR |= (1<<EEMPE);
-	/* Start eeprom write by setting EEPE */
-	EECR |= (1<<EEPE);
-}
-
-unsigned char EEPROM_read(unsigned int uiAddress)
-{
-	/* Wait for completion of previous write */
-	while(EECR & (1<<EEPE))
-	;
-	/* Set up address register */
-	EEAR = uiAddress;
-	/* Start eeprom read by writing EERE */
-	EECR |= (1<<EERE);
-	/* Return data from Data Register */
-	return EEDR;
 }
 
 //--------------------------------------------------------------------------------------
