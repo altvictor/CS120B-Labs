@@ -70,6 +70,8 @@ char customGhostBot[] = {
 //global variables
 unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
                               '_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_', NULL};
+unsigned char scores[] = {' ',' ',3,' ','H','I','G','H',':',' ',' ',' ',' ',3,' ',' ',
+                          '_','_','_','_','Y','O','U','R',':','_','_','_','_','_','_','_', NULL};
 unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
 unsigned char gameOver;
 unsigned char score;
@@ -101,11 +103,14 @@ int tick_Player2 (int state);
 enum tick_Stuff {start, move, stop};
 int tick_Stuff (int state);
 
-enum tick_Game {init, play, finish};
+enum tick_Game {init, play, finish, finishWait};
 int tick_Game (int state);
 
-enum tick_Display {clear, display, result, wait};
+enum tick_Display {clear, display, result, resultWait};
 int tick_Display (int state);
+
+void EEPROM_write(unsigned int uiAddress, unsigned char ucData);
+unsigned char EEPROM_read(unsigned int uiAddress);
 
 //timer
 unsigned long _avr_timer_M = 1;
@@ -167,7 +172,6 @@ int main(void)
 	LCD_Custom_Char(4, customGhostTop);
 	LCD_Custom_Char(5, customGhostBot);	
 	LCD_WriteCommand(0x80);
-	    
     gameOver = 0;
 	
     while (1) {}
@@ -394,7 +398,10 @@ int tick_Game (int state) {
 			state = gameOver ? finish : play;
 			break;
 		case finish:
-			state = gameOver ? finish : init;
+            state = finishWait;
+            break;
+        case finishWait:
+			state = gameOver ? finishWait : init;
 			break;
 		default:
 			state = init;
@@ -404,7 +411,8 @@ int tick_Game (int state) {
 	switch (state) { //actions
 		case init:
 			score = 0;
-            highScore = eeprom_read_byte((uint8_t)1);
+            //highScore = eeprom_read_byte((uint8_t)1);
+            highScore = EEPROM_read(1);
             high100 = highScore / 100;
             high10 = (highScore-(high100*100)) / 10;
             high1 = highScore-(high100*100)-(high10*10);
@@ -431,14 +439,18 @@ int tick_Game (int state) {
         	if (score > highScore){
             	highScore = score;
         	}
-        	eeprom_write_byte((uint8_t)1, highScore);
-        	if (A0 && A1) {
-                gameOver = 0;
-            }
+        	//eeprom_write_byte((uint8_t)1, highScore);
+            EEPROM_write(1, highScore);
+
             score100 = score / 100;
             score10 = (score-(score100*100)) / 10;
             score1 = score-(score100*100)-(score10*10);
 			break;
+        case finishWait:
+            if (A0 && A1) {
+                gameOver = 0;
+            }
+            break;
 		default:
 			break;
 	}
@@ -454,9 +466,9 @@ int tick_Display (int state) {
             state = gameOver ? result : display;
             break;
         case result:
-            state = wait;
-		case wait:
-			state = gameOver ? result : clear;
+            state = resultWait;
+		case resultWait:
+			state = gameOver ? resultWait : clear;
 			break;
         default:
             state = clear;
@@ -550,7 +562,8 @@ int tick_Display (int state) {
 			PORTB = score;
             break;
 		case result:   
-            //LCD_DisplayString(5, "HIGH:");
+            LCD_DisplayString(1, scores);
+            
             LCD_Cursor(10);
             LCD_WriteData(high100 + '0');
             LCD_Cursor(11);
@@ -558,7 +571,6 @@ int tick_Display (int state) {
             LCD_Cursor(12);
             LCD_WriteData(high1 + '0');
             
-            //LCD_DisplayString(21, "YOUR:");
             LCD_Cursor(26);
             LCD_WriteData(score100 + '0');
             LCD_Cursor(27);
@@ -566,12 +578,38 @@ int tick_Display (int state) {
             LCD_Cursor(28);
             LCD_WriteData(score1 + '0');
 			break;
-        case wait:
+        case resultWait:
             break;
         default:
             break;
     }
     return state;
+}
+
+//--------------------------------------------------------------------------------------
+void EEPROM_write(unsigned int uiAddress, unsigned char ucData)
+{
+    /* Wait for completion of previous write */
+    while(EECR & (1<<EEPE))
+    ;
+    /* Set up address and Data Registers */
+    EEAR = uiAddress;
+    EEDR = ucData;
+    /* Write logical one to EEMPE */
+    EECR |= (1<<EEMPE);
+    /* Start eeprom write by setting EEPE */
+    EECR |= (1<<EEPE);
+}unsigned char EEPROM_read(unsigned int uiAddress)
+{
+    /* Wait for completion of previous write */
+    while(EECR & (1<<EEPE))
+    ;
+    /* Set up address register */
+    EEAR = uiAddress;
+    /* Start eeprom read by writing EERE */
+    EECR |= (1<<EERE);
+    /* Return data from Data Register */
+    return EEDR;
 }
 
 //--------------------------------------------------------------------------------------
