@@ -73,7 +73,13 @@ unsigned char background[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' 
 unsigned char things[9] = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
 unsigned char gameOver;
 unsigned char score;
+unsigned char score100;
+unsigned char score10;
+unsigned char score1;
 unsigned char highScore;
+unsigned char high100;
+unsigned char high10;
+unsigned char high1;
 unsigned char P1position;
 unsigned char P2position;
 unsigned char numThings;
@@ -98,7 +104,7 @@ int tick_Stuff (int state);
 enum tick_Game {init, play, finish};
 int tick_Game (int state);
 
-enum tick_Display {clear, display, result};
+enum tick_Display {clear, display, result, wait};
 int tick_Display (int state);
 
 //timer
@@ -161,7 +167,7 @@ int main(void)
 	LCD_Custom_Char(4, customGhostTop);
 	LCD_Custom_Char(5, customGhostBot);	
 	LCD_WriteCommand(0x80);
-	
+	    
     gameOver = 0;
 	
     while (1) {}
@@ -352,11 +358,12 @@ int tick_Stuff (int state) {
     
     switch (state) { //actions
         case start:
+            numThings = 0;
             break;
         case move:
             for (unsigned char j = 0; j < numThings; j++){
                 things[j]--;
-				//deleting after it moves offscreen
+				//deleting after it moves off screen
                 if (things[j] % 16 == 0){
                     for (unsigned char k = j; k < numThings; k++){
                         things[k] = things[k+1];
@@ -397,6 +404,10 @@ int tick_Game (int state) {
 	switch (state) { //actions
 		case init:
 			score = 0;
+            highScore = eeprom_read_byte((uint8_t)1);
+            high100 = highScore / 100;
+            high10 = (highScore-(high100*100)) / 10;
+            high1 = highScore-(high100*100)-(high10*10);
 			break;
 		case play:
 			for (unsigned char j = 0; j < numThings; j++){
@@ -417,6 +428,16 @@ int tick_Game (int state) {
 			}
 			break;
 		case finish:
+        	if (score > highScore){
+            	highScore = score;
+        	}
+        	eeprom_write_byte((uint8_t)1, highScore);
+        	if (A0 && A1) {
+                gameOver = 0;
+            }
+            score100 = score / 100;
+            score10 = (score-(score100*100)) / 10;
+            score1 = score-(score100*100)-(score10*10);
 			break;
 		default:
 			break;
@@ -432,7 +453,9 @@ int tick_Display (int state) {
         case display:
             state = gameOver ? result : display;
             break;
-		case result:
+        case result:
+            state = wait;
+		case wait:
 			state = gameOver ? result : clear;
 			break;
         default:
@@ -449,7 +472,6 @@ int tick_Display (int state) {
             LCD_WriteData(1);
             LCD_Cursor(P2position);
             LCD_WriteData(3);
-			highScore = eeprom_read_byte(1);
             break;
         case display:
         	//player 1
@@ -527,14 +549,25 @@ int tick_Display (int state) {
 			//score
 			PORTB = score;
             break;
-		case result:
-			if (score > highScore){
-				highScore = score;
-			}
-			eeprom_write_byte(1, highScore);
-			gameOver = 0;
+		case result:   
+            //LCD_DisplayString(5, "HIGH:");
+            LCD_Cursor(10);
+            LCD_WriteData(high100 + '0');
+            LCD_Cursor(11);
+            LCD_WriteData(high10 + '0');
+            LCD_Cursor(12);
+            LCD_WriteData(high1 + '0');
             
+            //LCD_DisplayString(21, "YOUR:");
+            LCD_Cursor(26);
+            LCD_WriteData(score100 + '0');
+            LCD_Cursor(27);
+            LCD_WriteData(score10 + '0');
+            LCD_Cursor(28);
+            LCD_WriteData(score1 + '0');
 			break;
+        case wait:
+            break;
         default:
             break;
     }

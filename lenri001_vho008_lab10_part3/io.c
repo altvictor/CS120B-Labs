@@ -52,13 +52,18 @@ void LCD_WriteData(unsigned char Data) {
 }
 
 void LCD_DisplayString( unsigned char column, const unsigned char* string) {
-	LCD_ClearScreen();
-	unsigned char c = column;
-	while(*string) {
-		LCD_Cursor(c++);
-		LCD_WriteData(*string++);
-	}
-}
+// 	LCD_ClearScreen();
+// 	unsigned char c = column;
+// 	while(*string) {
+// 		LCD_Cursor(c++);
+// 		LCD_WriteData(*string++);
+// 	}
+// }
+    for (unsigned char i = 0; string[i]!=0; i++){
+        LCD_Cursor(column+i);
+        LCD_WriteData(string[i]);
+    }
+
 
 void LCD_Cursor(unsigned char column) {
 	if ( column < 17 ) { // 16x1 LCD: column < 9
