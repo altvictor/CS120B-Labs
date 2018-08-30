@@ -438,10 +438,9 @@ int tick_Game (int state) {
 		case finish:
         	if (score > highScore){
             	highScore = score;
+                EEPROM_write(1, highScore);
         	}
         	//eeprom_write_byte((uint8_t)1, highScore);
-            EEPROM_write(1, highScore);
-
             score100 = score / 100;
             score10 = (score-(score100*100)) / 10;
             score1 = score-(score100*100)-(score10*10);
