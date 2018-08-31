@@ -12,6 +12,7 @@
 #include "io.c"
 #include "scheduler.h"
 
+//custom character arrays
 char customChar[] = {
 	0x0F,
 	0x0B,
@@ -420,7 +421,7 @@ int tick_Game (int state) {
 		case play:
 			for (unsigned char j = 0; j < numThings; j++){
 				unsigned char loc = things[j];
-				//collision
+				//collision check
 				if (P1position == loc || P1position == things[j]){
 					gameOver = 1;
                     things[j]++;
